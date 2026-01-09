@@ -86,9 +86,11 @@ async def callback(request: Request):
     # This format is what Decap/Netlify CMS expects: "authorization:<provider>:success:<json>"
     # (provider should match backend name 'github')
     payload = {
-        "token": token,
-        "provider": "github",
+      "token": token,
+      "provider": "github",
+      "token_type": "bearer",
     }
+
 
     html = f"""
 <!doctype html>
