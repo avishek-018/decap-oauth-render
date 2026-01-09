@@ -51,28 +51,17 @@ def auth(request: Request):
 
 @app.get("/callback")
 async def callback(request: Request):
-    """
-    GitHub redirects here with ?code=...&state=...
-    We exchange code -> access_token, then postMessage it back to Decap (opener window).
-    """
     code = request.query_params.get("code")
     if not code:
-        return PlainTextResponse("Missing ?code from GitHub.", status_code=400)
+        return PlainTextResponse("Missing ?code", status_code=400)
 
-    client_id = env("GITHUB_CLIENT_ID")
-    client_secret = env("GITHUB_CLIENT_SECRET")
-
-    # The origin of your Decap site (must match where /admin is served from)
-    # Example: https://yourname.github.io or https://yourcustomdomain.com
-    site_origin = env("SITE_ORIGIN").rstrip("/")
-
-    async with httpx.AsyncClient(timeout=20) as client:
+    async with httpx.AsyncClient() as client:
         r = await client.post(
             GITHUB_TOKEN_URL,
             headers={"Accept": "application/json"},
             data={
-                "client_id": client_id,
-                "client_secret": client_secret,
+                "client_id": env("GITHUB_CLIENT_ID"),
+                "client_secret": env("GITHUB_CLIENT_SECRET"),
                 "code": code,
             },
         )
@@ -81,46 +70,12 @@ async def callback(request: Request):
 
     token = data.get("access_token")
     if not token:
-        return PlainTextResponse(f"No access_token returned. Response: {data}", status_code=400)
+        return PlainTextResponse("No token", status_code=400)
 
-    # This format is what Decap/Netlify CMS expects: "authorization:<provider>:success:<json>"
-    # (provider should match backend name 'github')
-    payload = {
-      "token": token,
-      "provider": "github",
-      "token_type": "bearer",
-    }
+    # 🔥 Redirect to SAME-ORIGIN callback page
+    redirect_url = (
+        "https://avishek-018.github.io/admin/callback.html?"
+        + urlencode({"token": token})
+    )
 
-
-    html = f"""
-<!doctype html>
-<html>
-  <head><meta charset="utf-8" /></head>
-  <body>
-    <p>Authorized. You can close this window.</p>
-    <script>
-      (function() {{
-        var payload = {payload};
-
-        // 1) Legacy Netlify/Decap string format
-        var msg1 = 'authorization:github:success:' + JSON.stringify(payload);
-
-        // 2) Structured object message (newer listeners)
-        var msg2 = {{
-          type: 'authorization',
-          provider: 'github',
-          status: 'success',
-          payload: payload
-        }};
-
-        if (window.opener) {{
-          window.opener.postMessage(msg1, '*');
-          window.opener.postMessage(msg2, '*');
-        }}
-        window.close();
-      }})();
-    </script>
-  </body>
-</html>
-"""
-    return HTMLResponse(html)
+    return RedirectResponse(redirect_url, status_code=302)
