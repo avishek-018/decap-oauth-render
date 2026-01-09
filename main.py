@@ -102,7 +102,7 @@ async def callback(request: Request):
       (function() {{
         var msg = 'authorization:github:success:' + JSON.stringify({payload});
         if (window.opener) {{
-          window.opener.postMessage(msg, '{site_origin}');
+          window.opener.postMessage(msg, '*');
         }}
         window.close();
       }})();
