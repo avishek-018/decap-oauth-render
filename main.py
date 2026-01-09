@@ -73,9 +73,7 @@ async def callback(request: Request):
         return PlainTextResponse("No token", status_code=400)
 
     # 🔥 Redirect to SAME-ORIGIN callback page
-    redirect_url = (
-        "https://avishek-018.github.io/admin/callback.html?"
-        + urlencode({"token": token})
-    )
+    redirect_url = f"https://avishek-018.github.io/admin/callback.html#token={token}"
+
 
     return RedirectResponse(redirect_url, status_code=302)
