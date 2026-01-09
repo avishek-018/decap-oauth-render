@@ -33,7 +33,7 @@ def auth(request: Request):
     callback_url = env("OAUTH_CALLBACK_URL")  # e.g. https://your-service.onrender.com/callback
 
     # Optional: private repos need 'repo' scope.
-    scope = os.getenv("GITHUB_SCOPE", "public_repo")  # set to "repo" if repo is private
+    scope = os.getenv("GITHUB_SCOPE", "repo")  # set to "repo" if repo is private
 
     # CSRF protection / flow correlation.
     # Decap doesn't require a specific state value; it just needs the token in the end.
