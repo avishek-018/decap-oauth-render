@@ -100,9 +100,22 @@ async def callback(request: Request):
     <p>Authorized. You can close this window.</p>
     <script>
       (function() {{
-        var msg = 'authorization:github:success:' + JSON.stringify({payload});
+        var payload = {payload};
+
+        // 1) Legacy Netlify/Decap string format
+        var msg1 = 'authorization:github:success:' + JSON.stringify(payload);
+
+        // 2) Structured object message (newer listeners)
+        var msg2 = {{
+          type: 'authorization',
+          provider: 'github',
+          status: 'success',
+          payload: payload
+        }};
+
         if (window.opener) {{
-          window.opener.postMessage(msg, '*');
+          window.opener.postMessage(msg1, '*');
+          window.opener.postMessage(msg2, '*');
         }}
         window.close();
       }})();
